@@ -8,6 +8,7 @@ mod cc;
 mod error;
 mod midi_message;
 mod note;
+mod stream_parser;
 
 pub use byte::{U14, U7};
 pub use cc::ControlFunction;
@@ -16,6 +17,7 @@ pub use midi_message::{
     Channel, ControlValue, MidiMessage, PitchBend, ProgramNumber, Song, SongPosition, Velocity,
 };
 pub use note::Note;
+pub use stream_parser::StreamParser;
 
 /// Use `FromBytesError` instead.
 pub type Error = FromBytesError;
