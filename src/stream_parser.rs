@@ -34,7 +34,7 @@ impl<'a, const N: usize> StreamParser<'a, N> {
             state: MidiState::ExpectAnyByte,
         }
     }
-    pub fn push(&mut self, byte: u8) -> Option<&[u8]> {
+    pub fn process_byte(&mut self, byte: u8) -> Option<&[u8]> {
         let byte = Self::get_byte_type(byte);
         match (&self.state, byte) {
             (MidiState::ExpectFirstDataByte(s), ByteType::DataByte(b)) => {
@@ -132,10 +132,10 @@ mod test {
         let mut message_buffer: [u8; 3] = [0; 3];
         let mut midi = StreamParser::new(&mut message_buffer);
         let bytes: &[u8] = &[0x90, 66, 44];
-        assert_eq!(None, midi.push(bytes[0]));
-        assert_eq!(None, midi.push(bytes[1]));
+        assert_eq!(None, midi.process_byte(bytes[0]));
+        assert_eq!(None, midi.process_byte(bytes[1]));
         assert_eq!(
-            midi.push(bytes[2]).unwrap(),
+            midi.process_byte(bytes[2]).unwrap(),
             bytes,
             "Is NoteOn message",
         );
@@ -147,7 +147,7 @@ mod test {
         let mut midi = StreamParser::new(&mut message_buffer);
         let bytes: &[u8] = &[0xf8];
         assert_eq!(
-            midi.push(bytes[0]).unwrap(),
+            midi.process_byte(bytes[0]).unwrap(),
             bytes,
             "Is Timing Clock message",
         );
@@ -158,12 +158,12 @@ mod test {
         let mut message_buffer: [u8; 5] = [0; 5];
         let mut midi = StreamParser::new(&mut message_buffer);
         let bytes: &[u8] = &[0xf0, 99, 66, 33, 0xf7];
-        assert_eq!(None, midi.push(bytes[0]));
-        assert_eq!(None, midi.push(bytes[1]));
-        assert_eq!(None, midi.push(bytes[2]));
-        assert_eq!(None, midi.push(bytes[3]));
+        assert_eq!(None, midi.process_byte(bytes[0]));
+        assert_eq!(None, midi.process_byte(bytes[1]));
+        assert_eq!(None, midi.process_byte(bytes[2]));
+        assert_eq!(None, midi.process_byte(bytes[3]));
         assert_eq!(
-            midi.push(bytes[4]).unwrap(),
+            midi.process_byte(bytes[4]).unwrap(),
             bytes,
             "Is SysEx message"
         );
@@ -176,15 +176,15 @@ mod test {
         let all_bytes: &[u8] = &[0x90, 0xf8, 66, 44];
         let real_time_byte: &[u8] = &all_bytes[1..2];
         let msg_bytes: &[u8] = &[all_bytes[0], all_bytes[2], all_bytes[3]];
-        assert_eq!(None, midi.push(all_bytes[0]));
+        assert_eq!(None, midi.process_byte(all_bytes[0]));
         assert_eq!(
-            midi.push(all_bytes[1]).unwrap(),
+            midi.process_byte(all_bytes[1]).unwrap(),
             real_time_byte,
             "Real time message is extracted immediately"
         );
-        assert_eq!(None, midi.push(all_bytes[2]));
+        assert_eq!(None, midi.process_byte(all_bytes[2]));
         assert_eq!(
-            midi.push(all_bytes[3]).unwrap(),
+            midi.process_byte(all_bytes[3]).unwrap(),
             msg_bytes,
             "Note On command is parsed properly"
         );
@@ -197,14 +197,14 @@ mod test {
         let all_bytes: &[u8] = &[0xd0, 66, 44];
         let msg_bytes: &[u8] = &all_bytes[0..2];
         let running_bytes: &[u8] = &[all_bytes[0], all_bytes[2]];
-        assert_eq!(None, midi.push(all_bytes[0]));
+        assert_eq!(None, midi.process_byte(all_bytes[0]));
         assert_eq!(
-            midi.push(all_bytes[1]).unwrap(),
+            midi.process_byte(all_bytes[1]).unwrap(),
             msg_bytes,
             "Extract first message"
         );
         assert_eq!(
-            midi.push(all_bytes[2]).unwrap(),
+            midi.process_byte(all_bytes[2]).unwrap(),
             running_bytes,
             "Extract running status message"
         );
@@ -217,16 +217,16 @@ mod test {
         let all_bytes: &[u8] = &[0x90, 66, 44, 50, 22];
         let msg_bytes: &[u8] = &all_bytes[0..3];
         let running_bytes: &[u8] = &[all_bytes[0], all_bytes[3], all_bytes[4]];
-        assert_eq!(None, midi.push(all_bytes[0]));
-        assert_eq!(None, midi.push(all_bytes[1]));
+        assert_eq!(None, midi.process_byte(all_bytes[0]));
+        assert_eq!(None, midi.process_byte(all_bytes[1]));
         assert_eq!(
-            midi.push(all_bytes[2]).unwrap(),
+            midi.process_byte(all_bytes[2]).unwrap(),
             msg_bytes,
             "Extract first message"
         );
-        assert_eq!(None, midi.push(all_bytes[3]));
+        assert_eq!(None, midi.process_byte(all_bytes[3]));
         assert_eq!(
-            midi.push(all_bytes[4]).unwrap(),
+            midi.process_byte(all_bytes[4]).unwrap(),
             running_bytes,
             "Extract running status message"
         );
